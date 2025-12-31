@@ -1,0 +1,55 @@
+services:
+  - type: web
+    name: nulex-backend
+    env: node
+    region: frankfurt  # or us, singapore, etc.
+    plan: free  # upgrade to starter/pro for production
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: KORAPAY_PUBLIC_KEY
+        value: pk_test_oHviqUnBoJsr8HtkkzT1569mGMTqU8jGeymVSo1j
+      - key: KORAPAY_SECRET_KEY
+        value: sk_test_VEWpuGGocX9yYKwAwQjFeWxcSsnRBS7SnRAXK1pq
+      - key: KORAPAY_ENCRYPTION_KEY
+        value: NoQDjKxn8W4aLBEn4TsZkfDuEXb3WWDE
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nulex-db
+          property: connectionString
+      - key: ADMIN_EMAIL
+        value: admin@nulex.com
+      - key: ADMIN_PASSWORD
+        value: Admin@1234
+      - key: FRONTEND_URL
+        value: https://nulex-frontend.onrender.com
+
+  - type: web
+    name: nulex-frontend
+    env: static
+    region: frankfurt
+    buildCommand: |
+      echo "Building frontend..."
+      # Replace placeholder URLs in HTML files
+      find frontend -name "*.html" -exec sed -i 's|YOUR_BACKGROUND_IMAGE_LINK_HERE|https://your-image-url.com/background.jpg|g' {} \;
+      find frontend -name "*.html" -exec sed -i 's|YOUR_LOGO_LINK_HERE|https://your-image-url.com/logo.png|g' {} \;
+      # Update API base URL
+      find frontend -name "*.js" -exec sed -i 's|https://your-backend-url.com/api|https://nulex-backend.onrender.com/api|g' {} \;
+    publishDir: ./frontend
+
+  - type: pserv
+    name: nulex-db
+    region: frankfurt
+    plan: free  # upgrade for production
+    diskSize: 1
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
+    databases:
+      - name: nulex_db
